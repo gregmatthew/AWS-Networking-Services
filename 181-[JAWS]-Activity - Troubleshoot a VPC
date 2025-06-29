@@ -1,0 +1,112 @@
+181-[JAWS]-Activity - Troubleshoot a VPC
+AWS VPC Troubleshooting Lab
+Lab Overview
+In this lab, you troubleshoot Virtual Private Cloud (VPC) configurations and analyze VPC Flow Logs. The environment includes two VPCs, Amazon Elastic Compute Cloud (EC2) instances, and other networking components, as depicted in the lab diagram. The lab is divided into four tasks, guiding you through creating and analyzing flow logs, troubleshooting connectivity issues, and verifying configurations.
+Duration: Approximately 75 minutes
+Objectives
+By the end of this lab, you will be able to:
+
+Create VPC Flow Logs.
+Troubleshoot VPC configuration issues.
+Analyze VPC Flow Logs to identify network issues.
+
+Accessing the AWS Management Console
+
+At the top of the lab instructions, choose Start Lab to launch your lab. A Start Lab panel will display the lab status.
+Wait until the message Lab status: ready appears, then choose X to close the panel.
+Note: It takes approximately 10 minutes for the lab to be ready.
+
+
+After the lab is ready, choose Details, then Show to view the Credentials panel. Copy the credentials and paste them into a text editor for later use.
+Choose AWS to open the AWS Management Console in a new browser tab. The system will automatically sign you in.
+Tip: If the browser tab does not open, check for a banner or icon indicating that pop-ups are blocked. Allow pop-ups to proceed.
+
+
+Arrange the AWS Management Console and lab instructions side by side to follow the steps easily. Keep the browser tab open for later tasks.
+
+Tasks
+Task 1: Connecting to the CLI Host Instance
+In this task, you use EC2 Instance Connect to connect to the CLI Host instance, which is used to run AWS Command Line Interface (CLI) commands.
+
+In the AWS Management Console, enter EC2 in the search bar and select it to open the EC2 Management Console.
+In the navigation pane, choose Instances.
+From the list of instances, select the CLI Host instance and connect using EC2 Instance Connect.
+
+Task 2: Creating VPC Flow Logs
+In this task, you create an Amazon Simple Storage Service (S3) bucket to store VPC Flow Log data and configure a flow log to capture IP traffic for network interfaces in VPC1.
+
+To create an S3 bucket for flow logs, run the following AWS CLI command, replacing ###### with random numbers to ensure a unique bucket name:aws s3 mb s3://flow-logs-bucket-######
+
+
+Create a flow log to capture all IP traffic for the VPC's network interfaces. Refer to the AWS CLI documentation for the create-flow-logs command to configure the flow log to publish to the S3 bucket.
+
+Task 3: Troubleshooting VPC Configuration Issues
+In this task, you troubleshoot connectivity issues to access a web server instance running in a public subnet in VPC1.
+
+Copy the WebServerIP from your text editor and paste it into a new browser tab.
+If the webpage fails to load with a "site can't be reached" or "connection timed out" message, this is expected. Keep the tab open for later verification.
+Troubleshooting Challenge #1: Investigate why the web server is running but the webpage is not loading, using only AWS CLI commands (avoid the AWS Management Console).
+Install the nmap utility on the CLI Host instance:sudo yum install -y nmap
+
+
+Check open ports on the web server by running:nmap <WebServerIP>
+
+Replace <WebServerIP> with the actual public IP address of the web server instance.
+If nmap finds no open ports, investigate potential issues such as security group configurations:aws ec2 describe-security-groups
+
+
+Verify that the security group allows HTTP traffic (port 80) and troubleshoot any misconfigurations.
+
+
+Troubleshooting Challenge #2: After resolving the web access issue, attempt to connect to the web server instance using EC2 Instance Connect. If the connection fails, investigate further.
+Verify that the security group allows SSH traffic (port 22).
+Check the Network Access Control List (NACL) settings for the subnet where the web server instance is running:aws ec2 describe-network-acls --filters "Name=association.subnet-id,Values=<VPC1PublicSubnetID>"
+
+Replace <VPC1PublicSubnetID> with the subnet ID from your text editor.
+Ensure the NACL allows inbound and outbound traffic on port 22 and troubleshoot any restrictive rules.
+
+
+
+Task 4: Analyzing Flow Logs
+In this task, you download and analyze the VPC Flow Logs to verify network activity, including failed connection attempts.
+Task 4.1: Downloading and Extracting Flow Logs
+
+Create a local directory on the CLI Host instance to store downloaded flow log files:mkdir flow_logs
+
+
+Download the flow log files from the S3 bucket to the local directory using the AWS CLI s3 cp command.
+
+Task 4.2: Analyzing the Logs
+
+List the downloaded log files:ls flow_logs
+
+
+Copy one of the log file names and analyze its contents using:cat flow_logs/<filename>
+
+Replace <filename> with the copied file name.
+Review the header row to understand the log structure, which includes fields like source IP address (fourth column), destination port (seventh column), and timestamps.
+Search for entries with REJECT to identify failed connection attempts:grep REJECT flow_logs/<filename>
+
+
+To convert timestamps to a human-readable format, use the date command. For example, if the timestamp is 1544a69331:date -d @1544a69331
+
+
+Compare the timestamp with the current time:date
+
+
+Note that the elastic network interface ID is included in each log entry. To verify it matches the web server’s network interface, run:aws ec2 describe-network-interfaces --filters "Name=addresses.private-ip-address,Values=<WebServerIP>"
+
+Replace <WebServerIP> with the web server’s IP address.
+For advanced log analysis, consider using Amazon Athena to ingest logs and run SQL queries. Refer to the AWS documentation on Querying Amazon VPC Flow Logs for more details.
+
+Conclusion
+Congratulations! You have successfully:
+
+Created VPC Flow Logs.
+Troubleshooted VPC configuration issues.
+Analyzed VPC Flow Logs to identify and resolve network issues.
+
+To end the lab:
+
+Choose End Lab at the top of the instructions and confirm by selecting Yes.
+Close the End Lab panel by choosing the X in the upper-right corner.
